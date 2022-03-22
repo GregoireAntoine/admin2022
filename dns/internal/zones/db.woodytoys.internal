@@ -1,0 +1,25 @@
+$ORIGIN woodytoys.internal.
+$TTL	3600
+@	    IN	    SOA	    ns.woodytoys.internal.   root.woodytoys.internal. (
+
+		    1	        ; Serial
+			3600		; Refresh
+			600		    ; Retry
+			86400		; Expire
+			600 )	    ; Negative Cache TTL
+
+
+
+			IN      NS      ns.woodytoys.internal.
+
+
+
+
+ns			IN	A	172.18.1.3;
+
+b2b			IN	A	172.18.3.4;
+www			IN	A	172.18.3.4;
+
+
+
+

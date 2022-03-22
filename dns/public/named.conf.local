@@ -1,0 +1,4 @@
+zone "woodytoys.domaineprojetadmin.ovh" {
+    type master;
+    file "/etc/bind/zones/db.woodytoys.domaineprojetadmin.ovh";
+};

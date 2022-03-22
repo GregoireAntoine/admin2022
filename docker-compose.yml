@@ -1,0 +1,161 @@
+version: "3.9"
+services:
+  dns-dmz:
+    image: "internetsystemsconsortium/bind9:9.16"
+    hostname: "dns"
+    domainname: "woodytoys.domaineprojetadmin.ovh"
+    volumes: 
+      - "./dns/public/named.conf:/etc/bind/named.conf"
+      - "./dns/public/zones/:/etc/bind/zones/"
+      - "./dns/public/named.conf.local:/etc/bind/named.conf.local"
+      - "./dns/public/named.conf.options:/etc/bind/named.conf.options"
+    ports: 
+      - "53:53"
+      - "53:53/udp"
+    networks: 
+      dmz: 
+        ipv4_address: "172.18.3.2"
+  voip-dmz:
+    image: tiredofit/freepbx
+    ports:
+      - 81:80
+      - 5060:5060/udp
+      - 5160:5160/udp
+      - 18000-18100:18000-18100/udp
+     #### Flash Operator Panel
+      - 4445:4445
+    volumes:
+      - ./certs:/certs
+      - ./data:/data
+      - ./logs:/var/log
+      - ./data/www:/var/www/html
+      - ./db:/var/lib/mysql
+     ### You can drop custom files overtop of the image if you have made modifications to modules/css/whatever - Use with care
+     #- ./assets/custom:/assets/custom
+
+    environment: 
+      - VIRTUAL_HOST=voip.woodytoys.domaineprojetadmin.ovh
+
+      - ZABBIX_HOSTNAME=voip-dmz
+      
+      - RTP_START=18000
+      - RTP_FINISH=18100
+    
+     ## Use for External MySQL Server
+      - DB_EMBEDDED=TRUE
+     
+     
+    restart: always
+
+    ### These final lines are for Fail2ban. If you don't want, comment and also add ENABLE_FAIL2BAN=FALSE to your environment
+    cap_add:
+      - NET_ADMIN
+    privileged: true
+    hostname: "voip"
+    domainname: "woodytoys.domaineprojetadmin.ovh"
+    networks: 
+      dmz: 
+        ipv4_address: "172.18.3.3"
+  web-dmz:
+    image: "admin/php:7.2"
+    build: "./web"
+    hostname: "web"
+    domainname: "woodytoys.domaineprojetadmin.ovh"
+    volumes: 
+      - "./web/www/:/var/www/woodtoys.com/"
+    ports: 
+      - "80:80"
+    networks: 
+      dmz: 
+        ipv4_address: "172.18.3.4"
+      internal-servers:
+  smtp-dmz: 
+    image: "mailserver/docker-mailserver:edge"
+    hostname: "smtp"
+    domainname: "woodytoys.domaineprojetadmin.ovh"
+    container_name: mailserver
+    env_file: mail/mailserver.env
+    # To avoid conflicts with yaml base-60 float, DO NOT remove the quotation marks.
+    # More information about the mailserver ports:
+    # https://docker-mailserver.github.io/docker-mailserver/edge/config/security/understanding-the-ports/
+    ports:
+      - "25:25"    # SMTP  (explicit TLS => STARTTLS)
+      - "143:143"  # IMAP4 (explicit TLS => STARTTLS)
+      - "465:465"  # ESMTP (implicit TLS)
+      - "587:587"  # ESMTP (explicit TLS => STARTTLS)
+      - "993:993"  # IMAP4 (implicit TLS)
+    volumes:
+      - ./data/maildata:/var/mail
+      - ./data/mailstate:/var/mail-state
+      - ./data/maillogs:/var/log/mail
+      - /etc/localtime:/etc/localtime:ro
+      - ./config/:/tmp/docker-mailserver/
+    restart: always
+    stop_grace_period: 1m
+    cap_add: [ "NET_ADMIN", "SYS_PTRACE" ]
+    networks: 
+      dmz: 
+        ipv4_address: "172.18.3.5"
+  dns-internal:
+    image: "internetsystemsconsortium/bind9:9.16"
+    hostname: "dns"
+    domainname: "woodytoys.internal"
+    volumes: 
+      - "./dns/internal/named.conf:/etc/bind/named.conf"
+      - "./dns/internal/zones/:/etc/bind/zones/"
+      - "./dns/internal/named.conf.local:/etc/bind/named.conf.local"
+      - "./dns/internal/named.conf.options:/etc/bind/named.conf.options"
+    networks: 
+      internal-servers: 
+        ipv4_address: "172.18.1.3"
+  resolver-internal:
+    image: "internetsystemsconsortium/bind9:9.16"
+    volumes: 
+      - "./dns/resolver/named.conf:/etc/bind/named.conf"
+      - "./dns/resolver/named.conf.default_zones:/etc/bind/named.conf.default_zones"
+      - "./dns/resolver/named.conf.local:/etc/bind/named.conf.local"
+      - "./dns/resolver/named.conf.options:/etc/bind/named.conf.options"
+    networks: 
+      internal-servers: 
+        ipv4_address: "172.18.1.5"
+  #ERP-internal:
+  db-internal: 
+    image: "mariadb"
+    environment:
+      MARIADB_RANDOM_ROOT_PASSWORD: "true"
+      MARIADB_USER: 'admin'
+      MARIADB_PASSWORD: 'admin'
+      MARIADB_DATABASE: 'woodtoys_db'
+    networks: 
+      internal-servers: 
+        ipv4_address: "172.18.1.4"
+    
+  pc-direction:
+    image: "ubuntu"
+    dns: "172.18.1.5"
+    networks: 
+      internal-computers: 
+        ipv4_address: "192.168.0.2"
+      internal-servers:
+      dmz:
+  pc-secretariat:
+    image: "ubuntu"
+    dns: "172.18.1.5"
+    networks: 
+      internal-computers: 
+        ipv4_address: "192.168.0.3"
+      internal-servers:
+      dmz:
+networks:
+  dmz:
+    ipam:
+      config:
+        - subnet: "172.18.3.0/24"
+  internal-servers:
+    ipam:
+      config:
+        - subnet: "172.18.1.0/24"
+  internal-computers:
+    ipam:
+      config:
+        - subnet: "192.168.0.0/16"

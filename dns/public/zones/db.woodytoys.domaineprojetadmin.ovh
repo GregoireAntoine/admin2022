@@ -1,0 +1,29 @@
+$ORIGIN woodytoys.domaineprojetadmin.ovh.
+$TTL	3600
+@	    IN	    SOA	    ns.woodytoys.domaineprojetadmin.ovh.   root.woodytoys.domaineprojetadmin.ovh. (
+
+		    1	        ; Serial
+			3600		; Refresh
+			600		    ; Retry
+			86400		; Expire
+			600 )	    ; Negative Cache TTL
+
+
+
+    IN      NS      ns.woodytoys.domaineprojetadmin.ovh.
+
+
+woodytoys.domaineprojetadmin.ovh.			IN	A	164.132.56.239;
+ns			IN	A	164.132.56.239;
+
+b2b			IN	A	164.132.56.239;
+www			IN	A	164.132.56.239;
+
+voip			IN	A	164.132.56.239;
+
+_sip._tcp		86400		IN	SRV		10		100		5060		voip.woodytoys.domaineprojetadmin.ovh.
+_sip._udp		86400		IN	SRV		10		100		5060		voip.woodytoys.domaineprojetadmin.ovh.
+
+mail			IN	A	164.132.56.239;
+@			IN	MX	10	mail.woodytoys.domaineprojetadmin.ovh.
+

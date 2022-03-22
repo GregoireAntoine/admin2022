@@ -1,0 +1,7 @@
+Serveur : 176.96.231.219
+
+Port : 22
+
+Login : student70
+
+mdp : Gregoire21
